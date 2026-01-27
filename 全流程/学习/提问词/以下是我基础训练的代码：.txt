@@ -1,0 +1,30 @@
+以下是我基础训练的代码：
+from ultralytics import YOLO
+
+if __name__ == '__main__':
+
+    # settings
+    settings_model = 'yolo11l'
+    settings_epochs = 10
+    settings_batch = 4
+    settings_imgsz = 1024
+    settings_name = f'{settings_model}_{settings_epochs}_{settings_batch}_{settings_imgsz}'
+
+    # train
+    model = YOLO(fr'models/{settings_model}.pt')
+    model.train(
+        data=r'mydataset2.yaml',
+        epochs=settings_epochs,     # default: 100
+        imgsz=settings_imgsz,     # default: 640
+        batch=settings_batch,  # default: 16
+        # cos_lr=True,  # default: False
+        device='cuda:0',
+        name=settings_name,
+    )
+
+现在我想进行一系列对比实验，实验内容如下：
+1. 分别使用 yolo11n / yolo11s / yolo11m / yolo11l 模型，看看参数量和最终性能的关系；
+2. 分别使用 imgsz=640 / 800 / 1024，看看imgsz和最终性能的关系；
+3. 分别 使用cos_lr 和 不使用cos_lr，看看余弦学习率对最终性能的影响；
+
+但是我有点疑问：假设我要做第二个实验，那么我要对第一个实验中的四个模型都做imgsz=640 / 800 / 1024三次实验吗？如果是要这样遍历的话，之后还有其它实验的次数会暴增。还是说可以从实验一中的某个模型做实验二，其结论推广到其它模型上？实验三也类似？请给出详细分析。

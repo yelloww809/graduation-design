@@ -1,0 +1,50 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.0.3 Chrome/140.0.7339.249 Electron/38.7.0 Safari/537.36" version="29.0.3">
+  <diagram name="第 1 页" id="uQvfSx0mipyrpZ_v4Zns">
+    <mxGraphModel dx="2066" dy="1201" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-1" value="A" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="79" y="20" width="69" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-2" value="B" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="124" width="69" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-3" value="C" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="139" y="124" width="70" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-4" value="D" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="79" y="228" width="70" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-5" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.06;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="CMgYa2A1UWYOTWJWdpW7-1" target="CMgYa2A1UWYOTWJWdpW7-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="55" y="99" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-6" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.96;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="CMgYa2A1UWYOTWJWdpW7-1" target="CMgYa2A1UWYOTWJWdpW7-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="174" y="99" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-7" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.06;entryY=0;rounded=0;" edge="1" parent="1" source="CMgYa2A1UWYOTWJWdpW7-2" target="CMgYa2A1UWYOTWJWdpW7-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="55" y="203" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="CMgYa2A1UWYOTWJWdpW7-8" value="" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.95;entryY=0;rounded=0;" edge="1" parent="1" source="CMgYa2A1UWYOTWJWdpW7-3" target="CMgYa2A1UWYOTWJWdpW7-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="174" y="203" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

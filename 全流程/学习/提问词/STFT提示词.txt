@@ -1,0 +1,107 @@
+我现在有一个数据集（路径为：D:\workspace_graduation\dataset\train），其中有
+1. 文件格式为.bin的一维IQ采样数据，文件名为'0.bin'、'1.bin'、'2.bin'、...、'7499.bin'，示例读取代码如下：（注意，整合到最后代码中时，这段代码中的变量名可以由你自行修改为更符合、更有意义的名字）
+import numpy as np
+file_path = 'path/to/your/file.bin'
+signal = np.fromfile(file_path, dtype=np.float16)
+signal = signal[::2] + 1j * signal[1::2]
+2. 文件格式为.json的标签文件，文件名为'0.json'、'1.json'、'2.json'、...、'7499.json'，示例如下：
+{
+  "signals": [
+    {
+      "signal_id": 0,
+      "start_frequency": 2447.0,
+      "end_frequency": 2467.0,
+      "start_time": 34.0,
+      "end_time": 51.0,
+      "class": 2
+    },
+    {
+      "signal_id": 1,
+      "start_frequency": 2459.97385,
+      "end_frequency": 2460.02615,
+      "start_time": 0.0,
+      "end_time": 60.999869999999994,
+      "class": 9
+    },
+    {
+      "signal_id": 2,
+      "start_frequency": 2446.875,
+      "end_frequency": 2447.125,
+      "start_time": 70.0,
+      "end_time": 80.0,
+      "class": 9
+    },
+    {
+      "signal_id": 3,
+      "start_frequency": 2467.5,
+      "end_frequency": 2468.5,
+      "start_time": 71.0,
+      "end_time": 100.0,
+      "class": 6
+    },
+    {
+      "signal_id": 4,
+      "start_frequency": 2466.0,
+      "end_frequency": 2468.0,
+      "start_time": 36.0,
+      "end_time": 100.0,
+      "class": 8
+    },
+    {
+      "signal_id": 5,
+      "start_frequency": 2449.5,
+      "end_frequency": 2450.5,
+      "start_time": 4.0,
+      "end_time": 49.0,
+      "class": 6
+    }
+  ],
+  "observation_range": [
+    2444.0,
+    2474.0
+  ]
+}
+signals字段是这个标签对应的数据文件中存在的信号，signal_id表示这是第几个信号，start_frequency / end_frequency / start_time / end_time 是这个信号的 起始频率 / 终止频率 / 起始时间 / 终止时间，class 是这个信号的种类；
+observation_range字段是这个标签对应的数据文件的观测频段；
+
+我现在想将.bin文件读取后进行短时傅里叶变换（STFT），得到复数时频图，取模并保存为.jpg文件格式，用于后续输入Ultralytics框架下的YOLO或RT-DETR，利用其目标检测的思想实现时频图上信号的定位与识别。
+
+注意：
+1. 我的项目路径为：D:\workspace_graduation\project_stft，此文件夹下直接存放 dataset_stft.py 文件
+2. 有关数据：
+	1. 由于我是IQ采样（每个信号值点都是 I+jQ 一个复数），所以根据奈奎斯特定律，采样率等于频宽即可，我的数据就是采样率等于频宽（如给出的 0.json 中的观测频段为 2444MHz 到 2474MHz，则 0.bin 数据的采样率即为 2474-2444=30MHz，我们又能通过加载0.bin知道其点数，进而可以求出采样时间=采样点数/采样率
+3. 有关STFT的要求：
+	1. 请使用 scipy 库中的 STFT 函数（好像这个函数不能用GPU加速，但是先使用这个函数尝试，如果后续需要再修改）；
+	2. 读取后的每个信号值点都是一个复数（I+jQ），进行STFT后得到的正负频谱不是对称的，都是有意义的；
+	3. 由于我后续要使用Ultralytics框架下的YOLO或RT-DETR，所以需要输出的图片的纵轴为频率轴，从上到下增大；横轴为时间轴，从左向右增大；
+	4. STFT的参数选择：频率分辨率为20kHz（则每个窗的点数=当前要处理的数据的采样率/频率分辨率），窗滑动时的重叠率为50%；
+4. 有关标签的要求：（即 按照 Ultralytics 框架要求的标签格式）
+	1. 输出格式为 .txt
+	2. 每一行代表一个信号，第一个整数为该信号的种类，后面四个小数为经过长宽归一化后的 (cx, cy, w, h) = (center_x, center_y, width, height)
+	3. json文件中可能存在一种特殊情况，就是在同一个数据中，有两个一模一样的信号（种类一样，起始频率/终止频率/起始时间/终止时间都一样），那么请你将起始时间和终止时间做微小偏移，以避免其完全相同。
+5. 有关数据集保存结构：生成的数据集文件夹直接保存在项目文件夹下，结构为：
+mydataset
+- images
+  - train
+    - .jpg
+    - ...
+  - val
+    - .jpg
+    - ...
+  - test
+    - .jpg
+    - ...
+- labels
+  - train
+    - .txt
+    - ...
+  - val
+    - .txt
+    - ...
+  - test
+    - .txt
+    - ...
+其中train-val-test按照8:1:1来随机分配（显式声明这一步的随机种子，便于让我自行调整生成多种数据集），文件名还是按照 0.jpg - 0.json 这样来命名
+6. 有关代码的要求：请加入进度条等可以可视化训练过程的代码，以及一些调试信息的输出。、
+
+请你按照我以上的要求，给出完整实现代码，谢谢！ 

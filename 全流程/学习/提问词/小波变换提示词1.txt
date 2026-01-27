@@ -1,0 +1,11 @@
+我的.py文件在 D:\workspace_graduation\project_wavelet_transform\wavelet.py
+我的数据集文件夹在 D:\workspace_graduation\dataset\train
+数据以.bin文件形式存储，读取代码示例：
+import numpy as np
+file_path = 'path/to/your/file.bin'
+signal = np.fromfile(file_path, dtype=np.float16)
+signal = signal[::2] + 1j * signal[1::2]
+
+对于数据文件 D:\workspace_graduation\dataset\train\0.bin
+其采样率为30Ms/s，采样时长为100ms
+

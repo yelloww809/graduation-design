@@ -1,0 +1,256 @@
+我现在正在研究使用YOLO目标检测来对STFT时频谱图上的信号进行检测。
+由于输入图片在满足一定频率分辨率要求的情况下会尺寸很大，直接输入ultralytics框架的话缩放到imgsz时会让一些小信号变得很小而检测不到。于是我想借鉴SAHI（Slicing Aided Hyper Inference）切片推理，将训练集也做切片的预处理，这样输入ultralytics训练框架时，缩小到imgsz所需要的缩小倍数就小了很多，一些小信号就不会因为缩小而变小很多，从而能提高小信号检测召回率。
+
+请你：
+1. 首先详细查看并读懂我当前的数据集预处理脚本，并详细说明已经实现的功能供我检查；
+2. 加入类似SAHI的切片操作，在脚本开头（函数之前）按照现有的格式加入几个显式的人工设置选项：（1）是否使用切片（2）切片的高宽是多少（3）切片的高宽重叠比（4）请你再考虑是否还要有其它显式预留人工设置的选项。
+注意，切片后每个切片单独保存，比如说原本的样本10.jpg切分为10个切片，那么这些切片命名是不是可以命名为10_1.jpg到10_10.jpg？还是说有其他更好更专业更广泛认可的命名方法？
+注意，不光是样本图片要切片，标签也需要根据切片而修改，注意标签文件的名字需要跟样本图片相同，这是ultralytics训练框架的要求。
+请你给出加入新功能后的完整脚本代码，并完善中文注释，方便我检查。
+
+以下代码是我目前使用的数据集预处理脚本。
+import numpy as np
+import json
+import os
+from scipy.signal import stft
+from PIL import Image
+from tqdm import tqdm
+import random
+from pathlib import Path
+import sys
+
+# --- 1. 配置参数 ---
+
+# 输入和输出路径
+PROJECT_DIR = Path(r'D:\workspace_graduation\project_stft')
+INPUT_DATA_DIR = Path(r'D:\workspace_graduation\dataset\train')
+
+# 数据集大小控制
+# 设置为 -1 来处理在 INPUT_DATA_DIR 中找到的所有文件。
+# 设置为正整数 (例如 1000) 来处理一个随机选择的、指定大小的子集。
+TOTAL_FILES = -1
+
+# STFT 参数
+FREQ_RESOLUTION = 20e3      # 频率分辨率: 20kHz
+OVERLAP_RATE = 0.5          # 窗重叠率: 50%
+
+# 图像生成开关
+USE_DB_SCALE = True         # True: 将幅度转换为分贝(dB)制。False: 使用线性幅度。
+USE_NORMALIZATION = True    # True: 将最终数据归一化到[0, 1]范围。False: 不进行归一化。
+
+# 数据集划分参数
+SPLIT_RATIOS = {'train': 0.8, 'val': 0.1, 'test': 0.1}
+RANDOM_SEED = 42            # 设置随机种子以保证每次划分结果一致
+
+
+# --- 2. 创建输出目录结构 ---
+
+def create_dir_structure(output_dir):
+    """创建YOLO所需的数据集目录结构"""
+    print("开始创建目录结构...")
+    for split in SPLIT_RATIOS.keys():
+        os.makedirs(output_dir / 'images' / split, exist_ok=True)
+        os.makedirs(output_dir / 'labels' / split, exist_ok=True)
+    print(f"目录 '{output_dir}' 创建成功！")
+
+
+# --- 3. 数据处理核心函数 ---
+
+def process_file(file_index, destination_split, output_dir):
+    """
+    处理单个数据文件，生成STFT图像和YOLO标签。
+    成功时返回图像尺寸(height, width)，失败时返回None。
+    """
+    try:
+        bin_path = INPUT_DATA_DIR / f'{file_index}.bin'
+        json_path = INPUT_DATA_DIR / f'{file_index}.json'
+
+        with open(json_path, 'r') as f:
+            metadata = json.load(f)
+
+        observation_range = metadata['observation_range']
+        min_freq_mhz, max_freq_mhz = observation_range[0], observation_range[1]
+        sampling_rate = (max_freq_mhz - min_freq_mhz) * 1e6
+
+        raw_signal = np.fromfile(bin_path, dtype=np.float16)
+        iq_signal = raw_signal[::2] + 1j * raw_signal[1::2]
+        total_signal_duration_sec = len(iq_signal) / sampling_rate
+
+        nperseg = int(sampling_rate / FREQ_RESOLUTION)
+        noverlap = int(nperseg * OVERLAP_RATE)
+        f, t, Zxx = stft(iq_signal, fs=sampling_rate, nperseg=nperseg, noverlap=noverlap, return_onesided=False)
+        Zxx_shifted = np.fft.fftshift(Zxx, axes=0)
+
+        magnitude = np.abs(Zxx_shifted)
+
+        if USE_DB_SCALE:
+            processed_data = 20 * np.log10(magnitude + 1e-9)
+        else:
+            processed_data = magnitude
+
+        if USE_NORMALIZATION:
+            min_val, max_val = np.min(processed_data), np.max(processed_data)
+            if max_val > min_val:
+                processed_data = (processed_data - min_val) / (max_val - min_val)
+            else:
+                processed_data = np.zeros_like(processed_data)
+
+        if not USE_NORMALIZATION:
+            min_val, max_val = np.min(processed_data), np.max(processed_data)
+            if max_val > min_val:
+                processed_data = (processed_data - min_val) / (max_val - min_val)
+            else:
+                processed_data = np.zeros_like(processed_data)
+
+        image_data = (processed_data * 255).astype(np.uint8)
+        img = Image.fromarray(image_data, 'L')
+        img_output_path = output_dir / 'images' / destination_split / f'{file_index}.jpg'
+        img.save(img_output_path)
+
+        yolo_labels = []
+        processed_yolo_strings = set()
+        observation_bw_mhz = max_freq_mhz - min_freq_mhz
+
+        for signal_info in metadata['signals']:
+            class_id = signal_info['class']
+            start_freq, end_freq = signal_info['start_frequency'], signal_info['end_frequency']
+            start_time_sec, end_time_sec = signal_info['start_time'] / 1e3, signal_info['end_time'] / 1e3
+
+            center_time_sec = (start_time_sec + end_time_sec) / 2.0
+            duration_sec = end_time_sec - start_time_sec
+            center_freq_mhz = (start_freq + end_freq) / 2.0
+            width_freq_mhz = end_freq - start_freq
+
+            cx = np.clip(center_time_sec / total_signal_duration_sec, 0, 1)
+            w = np.clip(duration_sec / total_signal_duration_sec, 0, 1)
+            cy = np.clip((center_freq_mhz - min_freq_mhz) / observation_bw_mhz, 0, 1)
+            h = np.clip(width_freq_mhz / observation_bw_mhz, 0, 1)
+
+            # --- [NEW LOGIC] 采用您的新去重策略 ---
+            yolo_string = f"{class_id} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f}"
+
+            # 定义一个在归一化坐标系下的微小偏移量
+            cx_offset = 0.000010
+
+            # 检查最终的字符串是否重复，如果重复，则对cx进行微调
+            while yolo_string in processed_yolo_strings:
+                # 仅对中心点cx进行微小的、固定的偏移
+                cx += cx_offset
+                # 确保偏移后的值不会超出边界
+                cx = np.clip(cx, 0, 1)
+                # test
+                print(f"{file_index}中有重复框")
+                # 生成新的字符串以供下一次循环检查
+                yolo_string = f"{class_id} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f}"
+
+            processed_yolo_strings.add(yolo_string)
+            yolo_labels.append(yolo_string)
+
+        label_output_path = output_dir / 'labels' / destination_split / f'{file_index}.txt'
+        with open(label_output_path, 'w') as f:
+            f.write("\n".join(yolo_labels))
+
+        return image_data.shape
+
+    except Exception as e:
+        print(f"\n处理文件 {file_index} 时发生错误: {e}")
+        return None
+
+
+# --- 4. 主执行逻辑 ---
+
+def main():
+    """主函数，组织整个数据集生成过程"""
+    print("--- 开始生成 STFT 数据集 ---")
+    print(f"当前设置: 使用分贝制 = {USE_DB_SCALE}, 使用归一化 = {USE_NORMALIZATION}")
+
+    base_output_name = "mydataset"
+    output_dataset_dir = PROJECT_DIR / base_output_name
+    counter = 2
+    while output_dataset_dir.exists():
+        output_dataset_dir = PROJECT_DIR / f"{base_output_name}{counter}"
+        counter += 1
+    print(f"\n数据集将被保存到: {output_dataset_dir.resolve()}")
+
+    print(f"\n正在扫描数据集文件夹: {INPUT_DATA_DIR}")
+    bin_files = list(INPUT_DATA_DIR.glob('*.bin'))
+    json_files = list(INPUT_DATA_DIR.glob('*.json'))
+
+    if len(bin_files) != len(json_files):
+        print(f"\n[错误] .bin ({len(bin_files)}) 和 .json ({len(json_files)}) 文件数量不匹配！程序已终止。")
+        sys.exit(1)
+
+    num_available_files = len(bin_files)
+    if num_available_files == 0:
+        print(f"\n[错误] 在 '{INPUT_DATA_DIR}' 中未找到任何数据文件。程序已终止。")
+        sys.exit(1)
+
+    all_file_indices = sorted([int(p.stem) for p in bin_files])
+
+    indices_to_process = []
+    if TOTAL_FILES == -1:
+        print(f"扫描成功！找到并准备处理全部 {num_available_files} 个文件对。")
+        indices_to_process = all_file_indices
+    elif TOTAL_FILES > 0:
+        if TOTAL_FILES > num_available_files:
+            print(f"\n[错误] 您请求处理 {TOTAL_FILES} 个文件，但文件夹中只有 {num_available_files} 个可用。程序已终止。")
+            sys.exit(1)
+        else:
+            print(f"扫描成功！找到 {num_available_files} 个文件对，将从中随机抽取 {TOTAL_FILES} 个进行处理。")
+            random.seed(RANDOM_SEED)
+            indices_to_process = random.sample(all_file_indices, TOTAL_FILES)
+    else:
+        print(f"\n[错误] TOTAL_FILES 的值 ({TOTAL_FILES}) 无效。请设置为 -1 (全部) 或一个正整数。程序已终止。")
+        sys.exit(1)
+
+    create_dir_structure(output_dataset_dir)
+
+    num_to_split = len(indices_to_process)
+    print(f"\n正在以 {RANDOM_SEED} 为随机种子打乱并划分 {num_to_split} 个文件...")
+    random.seed(RANDOM_SEED)
+    random.shuffle(indices_to_process)
+
+    train_end = int(num_to_split * SPLIT_RATIOS['train'])
+    val_end = train_end + int(num_to_split * SPLIT_RATIOS['val'])
+
+    train_indices = indices_to_process[:train_end]
+    val_indices = indices_to_process[train_end:val_end]
+    test_indices = indices_to_process[val_end:]
+
+    print(f"划分完成: {len(train_indices)} (训练), {len(val_indices)} (验证), {len(test_indices)} (测试)")
+
+    image_dims_counter = {}
+
+    print("\n--- 开始处理训练集 ---")
+    for index in tqdm(train_indices, desc="处理 Train 集"):
+        dims = process_file(index, 'train', output_dataset_dir)
+        if dims: image_dims_counter[dims] = image_dims_counter.get(dims, 0) + 1
+
+    print("\n--- 开始处理验证集 ---")
+    for index in tqdm(val_indices, desc="处理 Val 集"):
+        dims = process_file(index, 'val', output_dataset_dir)
+        if dims: image_dims_counter[dims] = image_dims_counter.get(dims, 0) + 1
+
+    print("\n--- 开始处理测试集 ---")
+    for index in tqdm(test_indices, desc="处理 Test 集"):
+        dims = process_file(index, 'test', output_dataset_dir)
+        if dims: image_dims_counter[dims] = image_dims_counter.get(dims, 0) + 1
+
+    summary_file_path = output_dataset_dir / 'image_dimensions_summary.txt'
+    try:
+        with open(summary_file_path, 'w') as f:
+            f.write("# Image Dimensions Summary\n")
+            f.write("# Format: (Height, Width) Count\n")
+            sorted_dims = sorted(image_dims_counter.items())
+            for dims, count in sorted_dims:
+                f.write(f"({dims[0]}, {dims[1]}) {count}\n")
+        print(f"\n已生成图像尺寸统计文件: {summary_file_path.resolve()}")
+    except Exception as e:
+        print(f"\n写入尺寸统计文件时出错: {e}")
+
+    print("\n--- 所有文件处理完毕！数据集已成功生成在以下路径：---")
+    print(f"{output_dataset_dir.resolve()}")
+
+
+if __name__ == '__main__':
+    main()
