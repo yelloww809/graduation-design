@@ -1,0 +1,137 @@
+# 1. Process
+## base
+| num        | STFT_MODE           | USE_DB_SCALE | NORM_TYPE              | IMAGE_CHANNEL_MODE | SAVE_IMAGE_FORMAT |
+| ---------- | ------------------- | ------------ | ---------------------- | ------------------ | ----------------- |
+| v1_base_1  | 1 (NPERSEG=1024)    | True         | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_base_2  | 1 (NPERSEG=1024)    | False        | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_base_3  | 1 (NPERSEG=1024)    | True         | SAMPLE                 | grey               | jpg               |
+| v1_base_4  | 1 (NPERSEG=1024)    | False        | SAMPLE                 | grey               | jpg               |
+|            |                     |              |                        |                    |                   |
+| v1_base_5  | 2                   | True         | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_base_6  | 2                   | False        | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_base_7  | 2                   | True         | SAMPLE                 | grey               | jpg               |
+| v1_base_8  | 2                   | False        | SAMPLE                 | grey               | jpg               |
+|            |                     |              |                        |                    |                   |
+| v1_base_9  | 3 (FREQ_RES_KHZ=20) | True         | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_base_10 | 3 (FREQ_RES_KHZ=20) | False        | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_base_11 | 3 (FREQ_RES_KHZ=20) | True         | SAMPLE                 | grey               | jpg               |
+| v1_base_12 | 3 (FREQ_RES_KHZ=20) | False        | SAMPLE                 | grey               | jpg               |
+
+## slice
+> 此时强制使用 STFT_MODE = 3
+
+| num        | STFT_MODE           | USE_DB_SCALE | NORM_TYPE              | IMAGE_CHANNEL_MODE | SAVE_IMAGE_FORMAT |
+| ---------- | ------------------- | ------------ | ---------------------- | ------------------ | ----------------- |
+| v1_slice_1 | 3 (FREQ_RES_KHZ=20) | True         | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_slice_2 | 3 (FREQ_RES_KHZ=20) | False        | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_slice_3 | 3 (FREQ_RES_KHZ=20) | True         | SAMPLE                 | grey               | jpg               |
+| v1_slice_4 | 3 (FREQ_RES_KHZ=20) | False        | SAMPLE                 | grey               | jpg               |        
+
+## large
+| num        | STFT_MODE | USE_DB_SCALE | NORM_TYPE              | IMAGE_CHANNEL_MODE | SAVE_IMAGE_FORMAT |
+| ---------- | --------- | ------------ | ---------------------- | ------------------ | ----------------- |
+| v1_large_1 | 2         | True         | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_large_2 | 2         | False        | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_large_3 | 2         | True         | SAMPLE                 | grey               | jpg               |
+| v1_large_4 | 2         | False        | SAMPLE                 | grey               | jpg               |
+|            |           |              |                        |                    |                   |
+| v1_large_5 | 2         | False        | SAMPLE                 | rgb                | jpg               |
+
+## small
+> 此时强制使用 STFT_MODE = 3
+
+| num        | STFT_MODE          | USE_DB_SCALE | NORM_TYPE              | IMAGE_CHANNEL_MODE | SAVE_IMAGE_FORMAT |
+| ---------- | ------------------ | ------------ | ---------------------- | ------------------ | ----------------- |
+| v1_small_1 | 3 (FREQ_RES_KHZ=5) | True         | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_small_2 | 3 (FREQ_RES_KHZ=5) | False        | GLOBAL (-140dB ~ 30dB) | grey               | jpg               |
+| v1_small_3 | 3 (FREQ_RES_KHZ=5) | True         | SAMPLE                 | grey               | jpg               |
+| v1_small_4 | 3 (FREQ_RES_KHZ=5) | False        | SAMPLE                 | grey               | jpg               |
+|            |                    |              |                        |                    |                   |
+| v1_small_5 | 3 (FREQ_RES_KHZ=5) | False        | SAMPLE                 | rgb                | jpg               |
+
+---
+
+# 2. Train
+## base
+| num          | process    | model   | epochs | patience | imgsz | batch | cos_lr | augmentation | mAP5095 (all) |
+| ------------ | ---------- | ------- | ------ | -------- | ----- | ----- | ------ | ------------ | ------------- |
+| v1_base_1_1  | v1_base_1  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_2_1  | v1_base_2  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_3_1  | v1_base_3  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_4_1  | v1_base_4  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+|              |            |         |        |          |       |       |        |              |               |
+| v1_base_5_1  | v1_base_5  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_6_1  | v1_base_6  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_7_1  | v1_base_7  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_8_1  | v1_base_8  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+|              |            |         |        |          |       |       |        |              |               |
+| v1_base_9_1  | v1_base_9  | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_10_1 | v1_base_10 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_11_1 | v1_base_11 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_base_12_1 | v1_base_12 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+
+## slice
+| num          | process    | model   | epochs | patience | imgsz | batch | cos_lr | augmentation | mAP5095 (all) |
+| ------------ | ---------- | ------- | ------ | -------- | ----- | ----- | ------ | ------------ | ------------- |
+| v1_slice_1_1 | v1_slice_1 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_slice_2_1 | v1_slice_2 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_slice_3_1 | v1_slice_3 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+| v1_slice_4_1 | v1_slice_4 | yolo11n | 200    | 50       | 640   | 32    | False  | default      |               |
+
+## large
+| num          | process    | model   | epochs | patience | imgsz | batch | cos_lr | augmentation | mAP5095 (all) |
+| ------------ | ---------- | ------- | ------ | -------- | ----- | ----- | ------ | ------------ | ------------- |
+| v1_large_1_1 | v1_large_1 | yolo11n | 200    | 50       | 640   | 32    | False  | default      | 0.626         |
+| v1_large_2_1 | v1_large_2 | yolo11n | 200    | 50       | 640   | 32    | False  | default      | 0.4           |
+| v1_large_3_1 | v1_large_3 | yolo11n | 200    | 50       | 640   | 32    | False  | default      | 0.677         |
+| v1_large_4_1 | v1_large_4 | yolo11n | 200    | 50       | 640   | 32    | False  | default      | 0.7           |
+|              |            |         |        |          |       |       |        |              |               |
+| v1_large_5_1 | v1_large_5 | yolo11n | 200    | 50       | 640   | 32    | False  | default      | 0.484         |
+
+## small
+| num          | process    | model   | epochs | patience | imgsz | batch | cos_lr | augmentation | mAP5095 (all) |
+| ------------ | ---------- | ------- | ------ | -------- | ----- | ----- | ------ | ------------ | ------------- |
+| v1_small_1_1 | v1_small_1 | yolo11n | 50     | 20       | 640   | 32    | False  | default      | 0.73          |
+| v1_small_2_1 | v1_small_2 | yolo11n | 50     | 20       | 640   | 32    | False  | default      | 0.226         |
+| v1_small_3_1 | v1_small_3 | yolo11n | 50     | 20       | 640   | 32    | False  | default      |               |
+| v1_small_4_1 | v1_small_4 | yolo11n | 50     | 20       | 640   | 32    | False  | default      | 0.727         |
+|              |            |         |        |          |       |       |        |              |               |
+| v1_small_5_1 | v1_small_5 | yolo11n | 50     | 20       | 640   | 32    | False  | default      | 0.281         |
+
+---
+
+# 3. System
+## base
+| num        | model        | mAP5095(conf=0.001) | mAP5095(conf=0.2) |
+| ---------- | ------------ | ------------------- | ----------------- |
+| v1_base_1  | v1_base_1_1  |                     |                   |
+| v1_base_2  | v1_base_2_1  |                     |                   |
+| v1_base_3  | v1_base_3_1  |                     |                   |
+| v1_base_4  | v1_base_4_1  |                     |                   |
+|            |              |                     |                   |
+| v1_base_5  | v1_base_5_1  |                     |                   |
+| v1_base_6  | v1_base_6_1  |                     |                   |
+| v1_base_7  | v1_base_7_1  |                     |                   |
+| v1_base_8  | v1_base_8_1  |                     |                   |
+|            |              |                     |                   |
+| v1_base_9  | v1_base_9_1  |                     |                   |
+| v1_base_10 | v1_base_10_1 |                     |                   |
+| v1_base_11 | v1_base_11_1 |                     |                   |
+| v1_base_12 | v1_base_12_1 |                     |                   |
+
+
+## slice
+| num        | model        | mAP5095(conf=0.2) |
+| ---------- | ------------ | ----------------- |
+| v1_slice_1 | v1_slice_1_1 |                   |
+| v1_slice_2 | v1_slice_2_1 |                   |
+| v1_slice_3 | v1_slice_3_1 |                   |
+| v1_slice_4 | v1_slice_4_1 |                   |
+
+## dual
+| num       | model_large  | model_small  | mAP5095(conf_large=0.2,conf_small=0.6) |
+| --------- | ------------ | ------------ | -------------------------------------- |
+| v1_dual_1 | v1_large_1_1 | v1_small_1_1 |                                        |
+| v1_dual_2 | v1_large_2_1 | v1_small_2_1 |                                        |
+| v1_dual_3 | v1_large_3_1 | v1_small_3_1 |                                        |
+| v1_dual_4 | v1_large_4_1 | v1_small_4_1 |                                        |
